@@ -70,3 +70,16 @@ cc_binary(
         "//tensorflow/lite/schema:schema_fbs",
     ],
 )
+
+cc_library(
+    name = "simple_add_model_data",
+    srcs = [
+        "simple_add_model_data.cc",
+    ],
+    hdrs = [
+        "simple_add_model_data.h",
+    ],
+    visibility = [
+        ":micro_top_level",
+    ],
+)
