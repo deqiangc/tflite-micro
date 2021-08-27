@@ -83,3 +83,17 @@ cc_library(
         ":micro_top_level",
     ],
 )
+
+cc_binary(
+    name = "simple_add_model_benchmark",
+    srcs = ["simple_add_model_benchmark.cc"],
+    deps = [
+        ":micro_benchmark",
+        ":simple_add_model_data",
+        "//tensorflow/lite/c:common",
+        "//tensorflow/lite/micro:micro_error_reporter",
+        "//tensorflow/lite/micro:micro_framework",
+        "//tensorflow/lite/micro:op_resolvers",
+        "//tensorflow/lite/micro:system_setup",
+    ],
+)
