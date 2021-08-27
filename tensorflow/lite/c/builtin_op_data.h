@@ -208,11 +208,13 @@ typedef struct {
   TfLiteFusedActivation activation;
 } TfLiteConcatenationParams;
 
+/** Comment out for removing add's builtin
 typedef struct {
   TfLiteFusedActivation activation;
   // Parameter added for the version 4.
   bool pot_scale_int16;
 } TfLiteAddParams;
+**/
 
 typedef struct {
   EmptyStructPlaceholder placeholder;

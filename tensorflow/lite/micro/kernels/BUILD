@@ -238,7 +238,10 @@ cc_library(
 
 cc_library(
     name = "micro_utils",
-    hdrs = ["micro_utils.h"],
+    hdrs = [
+        "micro_utils.h",
+        "schema_offset_generated.h",
+    ],
 )
 
 ####################################
@@ -392,11 +395,11 @@ cc_test(
     ],
     deps = [
         ":conv_test_common",
-        "//tensorflow/lite/micro/kernels/testdata:conv_test_data",
         ":kernel_runner",
         "//tensorflow/lite/c:common",
         "//tensorflow/lite/micro:micro_utils",
         "//tensorflow/lite/micro:test_helpers",
+        "//tensorflow/lite/micro/kernels/testdata:conv_test_data",
         "//tensorflow/lite/micro/testing:micro_test",
     ],
 )

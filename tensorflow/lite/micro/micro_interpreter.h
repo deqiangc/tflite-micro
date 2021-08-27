@@ -151,6 +151,8 @@ class MicroInterpreter {
   static TfLiteStatus GetGraph(struct TfLiteContext* context,
                                TfLiteIntArray** args);
 
+  static int8_t GetInt8FromBuiltInOptions(const void* op, const int offset);
+
   const Model* model_;
   const MicroOpResolver& op_resolver_;
   ErrorReporter* error_reporter_;

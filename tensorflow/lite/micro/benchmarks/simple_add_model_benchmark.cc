@@ -17,8 +17,8 @@ limitations under the License.
 #include <cstdlib>
 
 #include "tensorflow/lite/c/common.h"
-#include "tensorflow/lite/micro/benchmarks/simple_add_model_data.h"
 #include "tensorflow/lite/micro/benchmarks/micro_benchmark.h"
+#include "tensorflow/lite/micro/benchmarks/simple_add_model_data.h"
 #include "tensorflow/lite/micro/kernels/fully_connected.h"
 #include "tensorflow/lite/micro/kernels/softmax.h"
 #include "tensorflow/lite/micro/micro_error_reporter.h"
@@ -53,13 +53,13 @@ KeywordBenchmarkRunner* CreateBenchmarkRunner(MicroProfiler* profiler) {
   // lifetime must exceed that of the KeywordBenchmarkRunner object.
   KeywordOpResolver* op_resolver = new (op_resolver_buffer) KeywordOpResolver();
   op_resolver->AddAdd();
-/*  op_resolver->AddQuantize();
-  op_resolver->AddSoftmax(tflite::Register_SOFTMAX_INT8_INT16());
-  op_resolver->AddSvdf();
-*/
+  /*  op_resolver->AddQuantize();
+    op_resolver->AddSoftmax(tflite::Register_SOFTMAX_INT8_INT16());
+    op_resolver->AddSvdf();
+  */
   return new (benchmark_runner_buffer)
-      KeywordBenchmarkRunner(g_simple_add_model_data, op_resolver,
-                             tensor_arena, kTensorArenaSize, profiler);
+      KeywordBenchmarkRunner(g_simple_add_model_data, op_resolver, tensor_arena,
+                             kTensorArenaSize, profiler);
 }
 
 void KeywordRunNIerations(int iterations, const char* tag,

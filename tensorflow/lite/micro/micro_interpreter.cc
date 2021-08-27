@@ -85,7 +85,19 @@ void MicroInterpreter::Init(MicroProfiler* profiler) {
   context_.GetEvalTensor = GetEvalTensor;
   context_.profiler = profiler;
 
+  // Does not quite scale up, does it?
+  // template approach probably does not works here.
+  // Another table with all varieties?
+  context_.GetInt8FromBuiltInOptions = GetInt8FromBuiltInOptions;
+
   initialization_status_ = kTfLiteOk;
+}
+
+int8_t MicroInterpreter::GetInt8FromBuiltInOptions(const void* op,
+                                                   const int offset) {
+  const flatbuffers::Table* builtin_option =
+      reinterpret_cast<const flatbuffers::Table*>(op);
+  return builtin_option->GetField(offset, 0);
 }
 
 TfLiteStatus MicroInterpreter::PrepareNodeAndRegistrationDataFromFlatbuffer() {
@@ -130,35 +142,41 @@ TfLiteStatus MicroInterpreter::PrepareNodeAndRegistrationDataFromFlatbuffer() {
       size_t custom_data_size = 0;
       unsigned char* builtin_data = nullptr;
 
-      if (op_type == BuiltinOperator_CUSTOM) {
-        // Custom Ops may or may not have a non-null custom_options field.
-        if (op->custom_options() != nullptr) {
-          custom_data =
-              reinterpret_cast<const char*>(op->custom_options()->data());
-          custom_data_size = op->custom_options()->size();
+      if (op->opcode_index() != BuiltinOperator_ADD) {
+        // Call parser for anything else
+        if (op_type == BuiltinOperator_CUSTOM) {
+          // Custom Ops may or may not have a non-null custom_options field.
+          if (op->custom_options() != nullptr) {
+            custom_data =
+                reinterpret_cast<const char*>(op->custom_options()->data());
+            custom_data_size = op->custom_options()->size();
+          }
+        } else {
+          if (op->custom_options() != nullptr) {
+            MicroPrintf(
+                "Unsupported behavior: found builtin operator %s with custom "
+                "options.\n",
+                EnumNameBuiltinOperator(op_type));
+            return kTfLiteError;
+          }
+
+          MicroOpResolver::BuiltinParseFunction parser =
+              op_resolver_.GetOpDataParser(op_type);
+          if (parser == nullptr) {
+            MicroPrintf("Did not find a parser for %s",
+                        EnumNameBuiltinOperator(op_type));
+
+            return kTfLiteError;
+          }
+          TF_LITE_ENSURE_STATUS(parser(op, error_reporter_,
+                                       builtin_data_allocator,
+                                       (void**)(&builtin_data)));
         }
       } else {
-        if (op->custom_options() != nullptr) {
-          MicroPrintf(
-              "Unsupported behavior: found builtin operator %s with custom "
-              "options.\n",
-              EnumNameBuiltinOperator(op_type));
-          return kTfLiteError;
-        }
-
-        MicroOpResolver::BuiltinParseFunction parser =
-            op_resolver_.GetOpDataParser(op_type);
-        if (parser == nullptr) {
-          MicroPrintf("Did not find a parser for %s",
-                      EnumNameBuiltinOperator(op_type));
-
-          return kTfLiteError;
-        }
-        TF_LITE_ENSURE_STATUS(parser(op, error_reporter_,
-                                     builtin_data_allocator,
-                                     (void**)(&builtin_data)));
+        // For ADD, no parse, just pass the flatbuffer pointer.
+        auto* temp = const_cast<void*>(op->builtin_options());
+        builtin_data = reinterpret_cast<unsigned char*>(temp);
       }
-
       TfLiteIntArray* inputs_array;
       TF_LITE_ENSURE_STATUS(allocator_.FlatBufferVectorToTfLiteTypeArray(
           op->inputs(), &inputs_array));

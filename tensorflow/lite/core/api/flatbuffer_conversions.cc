@@ -912,26 +912,29 @@ TfLiteStatus ParseAbs(const Operator*, ErrorReporter*, BuiltinDataAllocator*,
 
 TfLiteStatus ParseAdd(const Operator* op, ErrorReporter* error_reporter,
                       BuiltinDataAllocator* allocator, void** builtin_data) {
-  CheckParsePointerParams(op, error_reporter, allocator, builtin_data);
+  /*
+    CheckParsePointerParams(op, error_reporter, allocator, builtin_data);
 
-  SafeBuiltinDataAllocator safe_allocator(allocator);
-  std::unique_ptr<TfLiteAddParams, SafeBuiltinDataAllocator::BuiltinDataDeleter>
-      params = safe_allocator.Allocate<TfLiteAddParams>();
-  TF_LITE_ENSURE(error_reporter, params != nullptr);
+    SafeBuiltinDataAllocator safe_allocator(allocator);
+    std::unique_ptr<TfLiteAddParams,
+    SafeBuiltinDataAllocator::BuiltinDataDeleter> params =
+    safe_allocator.Allocate<TfLiteAddParams>(); TF_LITE_ENSURE(error_reporter,
+    params != nullptr);
 
-  const AddOptions* schema_params = op->builtin_options_as_AddOptions();
+    const AddOptions* schema_params = op->builtin_options_as_AddOptions();
 
-  if (schema_params != nullptr) {
-    params->activation =
-        ConvertActivation(schema_params->fused_activation_function());
-    params->pot_scale_int16 = schema_params->pot_scale_int16();
-  } else {
-    // TODO(b/157480169): We should either return kTfLiteError or fill in some
-    // reasonable defaults in the params struct. We are not doing so until we
-    // better undertand the ramifications of changing the legacy behavior.
-  }
+    if (schema_params != nullptr) {
+      params->activation =
+          ConvertActivation(schema_params->fused_activation_function());
+      params->pot_scale_int16 = schema_params->pot_scale_int16();
+    } else {
+      // TODO(b/157480169): We should either return kTfLiteError or fill in some
+      // reasonable defaults in the params struct. We are not doing so until we
+      // better undertand the ramifications of changing the legacy behavior.
+    }
 
-  *builtin_data = params.release();
+    *builtin_data = params.release();
+    */
   return kTfLiteOk;
 }
 
