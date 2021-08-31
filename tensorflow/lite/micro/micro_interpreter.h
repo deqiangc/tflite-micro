@@ -22,6 +22,7 @@ limitations under the License.
 #include "tensorflow/lite/c/common.h"
 #include "tensorflow/lite/core/api/error_reporter.h"
 #include "tensorflow/lite/kernels/internal/tensor_ctypes.h"
+#include "tensorflow/lite/micro/memory_planner/memory_planner.h"
 #include "tensorflow/lite/micro/micro_allocator.h"
 #include "tensorflow/lite/micro/micro_graph.h"
 #include "tensorflow/lite/micro/micro_op_resolver.h"
@@ -47,6 +48,7 @@ class MicroInterpreter {
   MicroInterpreter(const Model* model, const MicroOpResolver& op_resolver,
                    uint8_t* tensor_arena, size_t tensor_arena_size,
                    ErrorReporter* error_reporter,
+                   MemoryPlanner* memory_planner_ptr = nullptr,
                    MicroProfiler* profiler = nullptr);
 
   // Create an interpreter instance using an existing MicroAllocator instance.

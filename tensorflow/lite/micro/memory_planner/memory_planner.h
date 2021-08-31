@@ -21,6 +21,15 @@ limitations under the License.
 
 namespace tflite {
 
+// Offline plan is an array of OfflinePlanEntry. Struct OfflineMemoryPlanEntry
+// is fixed size using only primitive fields, making it easy to adjust offline.
+// Improvement needed:
+// 1. Buffer index is implicit and is something that needs to be addressed.
+// 2. size is not in here.
+typedef struct OfflineMemoryPlanEntry {
+  int16_t offset;
+} OfflineMemoryPlanEntry;
+
 // Interface class for planning the layout of memory buffers during the
 // execution of a graph.
 // It's designed to be used by a client that iterates in any order through the
@@ -64,6 +73,17 @@ class MemoryPlanner {
   // Calculated layout offset for the N-th buffer added to the planner.
   virtual TfLiteStatus GetOffsetForBuffer(tflite::ErrorReporter* error_reporter,
                                           int buffer_index, int* offset) = 0;
+
+  // Returns the size of the offline plan content in the given buffer.
+  // Returns -1 if the given buffer is not enough to hold the offline plan.
+  // Returns a positive number if the offline plan is populated successfully in
+  // the given buffer. Returns 0 if there is no offline plan available. This is
+  // the default behavior.
+  virtual int ProduceOfflinePlan(tflite::ErrorReporter* error_reporter,
+                                 unsigned char* plan_buffer,
+                                 int buffer_max_size) {
+    return 0;
+  }
 };
 
 }  // namespace tflite

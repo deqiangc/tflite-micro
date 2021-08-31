@@ -392,6 +392,41 @@ void GreedyMemoryPlanner::PrintMemoryPlan() {
 
 int GreedyMemoryPlanner::GetBufferCount() { return buffer_count_; }
 
+int GreedyMemoryPlanner::ProduceOfflinePlan(
+    tflite::ErrorReporter* error_reporter, uint8_t* plan_buffer,
+    int buffer_max_size) {
+  int actual_memory_plan_size = buffer_count_ * sizeof(OfflineMemoryPlanEntry);
+  if (buffer_max_size < actual_memory_plan_size) {
+    return -1;
+  }
+
+  MicroPrintf("total buffer count = %d;\n", buffer_count_);
+
+  OfflineMemoryPlanEntry* memory_plan =
+      reinterpret_cast<OfflineMemoryPlanEntry*>(plan_buffer);
+
+  for (int i = 0; i < buffer_count_; i++) {
+    int offset;
+    GetOffsetForBuffer(error_reporter, i, &offset);
+    // memory plan can use a different data type than int if we wants.
+    memory_plan->offset = offset;
+    memory_plan++;
+  }
+  SerializedOfflineMemoryPlan(plan_buffer, actual_memory_plan_size);
+
+  return actual_memory_plan_size;
+}
+
+void GreedyMemoryPlanner::SerializedOfflineMemoryPlan(uint8_t* buffer,
+                                                      int buffer_size) {
+  MicroPrintf("const int kOfflineMemoryPlanDataLength = %d;", buffer_size);
+  MicroPrintf("const unsigned char OfflineMemoryPlanData[] = {");
+  for (int j = 0; j < buffer_size; j++) {
+    MicroPrintf("%x,", buffer[j]);
+  }
+  MicroPrintf("};");
+}
+
 TfLiteStatus GreedyMemoryPlanner::GetOffsetForBuffer(
     tflite::ErrorReporter* error_reporter, int buffer_index, int* offset) {
   CalculateOffsetsIfNeeded();

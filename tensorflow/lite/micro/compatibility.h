@@ -29,4 +29,6 @@ limitations under the License.
 #define TF_LITE_REMOVE_VIRTUAL_DELETE
 #endif
 
+//#define ENABLE_OFFLINE_PLANNER
+
 #endif  // TENSORFLOW_LITE_MICRO_COMPATIBILITY_H_

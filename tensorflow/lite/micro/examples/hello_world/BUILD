@@ -46,6 +46,8 @@ cc_test(
         "//tensorflow/lite/micro:micro_error_reporter",
         "//tensorflow/lite/micro:micro_framework",
         "//tensorflow/lite/micro:op_resolvers",
+        "//tensorflow/lite/micro/memory_planner",
+        "//tensorflow/lite/micro/memory_planner:offline_memory_planner",
         "//tensorflow/lite/micro/testing:micro_test",
         "//tensorflow/lite/schema:schema_fbs",
     ],

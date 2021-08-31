@@ -300,6 +300,7 @@ TfLiteStatus AllocationInfoBuilder::AddScratchBuffers(
   return kTfLiteOk;
 }
 
+#if !defined(ENABLE_OFFLINE_PLANNER)
 TfLiteStatus CreatePlan(ErrorReporter* error_reporter,
                         GreedyMemoryPlanner* planner,
                         const AllocationInfo* allocation_info,
@@ -323,6 +324,10 @@ TfLiteStatus CreatePlan(ErrorReporter* error_reporter,
   }
   return kTfLiteOk;
 }
+#endif
+
+const int kOfflinePlanBufferMaxSize = 2048;
+unsigned char offline_memory_plan_buffer[kOfflinePlanBufferMaxSize];
 
 TfLiteStatus CommitPlan(ErrorReporter* error_reporter, MemoryPlanner* planner,
                         uint8_t* starting_point,
@@ -340,6 +345,10 @@ TfLiteStatus CommitPlan(ErrorReporter* error_reporter, MemoryPlanner* planner,
       ++planner_index;
     }
   }
+
+  planner->ProduceOfflinePlan(error_reporter, offline_memory_plan_buffer,
+                              kOfflinePlanBufferMaxSize);
+
   return kTfLiteOk;
 }
 }  // namespace
@@ -562,31 +571,36 @@ TfLiteStatus InitializeTfLiteEvalTensorFromFlatbuffer(
 }  // namespace internal
 
 MicroAllocator::MicroAllocator(SimpleMemoryAllocator* memory_allocator,
-                               ErrorReporter* error_reporter)
+                               ErrorReporter* error_reporter,
+                               MemoryPlanner* memory_planner_ptr)
     : memory_allocator_(memory_allocator),
       error_reporter_(error_reporter),
-      model_is_allocating_(false) {}
+      model_is_allocating_(false),
+      memory_planner_ptr_(memory_planner_ptr) {}
 
 MicroAllocator::~MicroAllocator() {}
 
 MicroAllocator* MicroAllocator::Create(uint8_t* tensor_arena, size_t arena_size,
-                                       ErrorReporter* error_reporter) {
+                                       ErrorReporter* error_reporter,
+                                       MemoryPlanner* memory_planner_ptr) {
   uint8_t* aligned_arena = AlignPointerUp(tensor_arena, kBufferAlignment);
   size_t aligned_arena_size = tensor_arena + arena_size - aligned_arena;
+
   return Create(SimpleMemoryAllocator::Create(error_reporter, aligned_arena,
                                               aligned_arena_size),
-                error_reporter);
+                error_reporter, memory_planner_ptr);
 }
 
 MicroAllocator* MicroAllocator::Create(SimpleMemoryAllocator* memory_allocator,
-                                       ErrorReporter* error_reporter) {
+                                       ErrorReporter* error_reporter,
+                                       MemoryPlanner* memory_planner_ptr) {
   TFLITE_DCHECK(memory_allocator != nullptr);
   TFLITE_DCHECK(error_reporter != nullptr);
 
   uint8_t* allocator_buffer = memory_allocator->AllocateFromTail(
       sizeof(MicroAllocator), alignof(MicroAllocator));
-  MicroAllocator* allocator =
-      new (allocator_buffer) MicroAllocator(memory_allocator, error_reporter);
+  MicroAllocator* allocator = new (allocator_buffer)
+      MicroAllocator(memory_allocator, error_reporter, memory_planner_ptr);
   return allocator;
 }
 
@@ -976,9 +990,29 @@ TfLiteStatus MicroAllocator::CommitStaticMemoryPlan(
   uint8_t* planner_arena =
       memory_allocator_->AllocateTemp(remaining_arena_size, kBufferAlignment);
   TF_LITE_ENSURE(error_reporter_, planner_arena != nullptr);
-  GreedyMemoryPlanner planner(planner_arena, remaining_arena_size);
-  TF_LITE_ENSURE_STATUS(CreatePlan(error_reporter_, &planner, allocation_info,
-                                   allocation_info_count));
+
+  // I doubt the linker would be able to detect this is dead code and prune.
+  // Need to create the planner outside in main and pass it down, but
+  // remaining_arena_size is dynamic, so this will be a bit convoluted.
+  // A better alternative may be passing in structure indicating what kind of
+  // memory plan is needed and create memory planner conditionally. But creating
+  // memory planner conditionally always have the problem of scope: b/c, we
+  // wants to avoid use new.  The solution could be using placement new and
+  // allocate from arena, but this is going in circles? putting this inside a
+  // block would also make it local!
+#if !defined(ENABLE_OFFLINE_PLANNER)
+
+  GreedyMemoryPlanner greedy_memory_planner(planner_arena,
+                                            remaining_arena_size);
+
+  if (!memory_planner_ptr_) {
+    // GreedyMemoryPlanner planner(planner_arena, remaining_arena_size);
+
+    memory_planner_ptr_ = &greedy_memory_planner;
+    TF_LITE_ENSURE_STATUS(CreatePlan(error_reporter_, &greedy_memory_planner,
+                                     allocation_info, allocation_info_count));
+  }
+#endif
 
   // Reset all temp allocations used above:
   memory_allocator_->ResetTempAllocations();
@@ -987,22 +1021,24 @@ TfLiteStatus MicroAllocator::CommitStaticMemoryPlan(
       memory_allocator_->GetAvailableMemory(kBufferAlignment);
 
   // Make sure we have enough arena size.
-  if (planner.GetMaximumMemorySize() > actual_available_arena_size) {
+  if (memory_planner_ptr_->GetMaximumMemorySize() >
+      actual_available_arena_size) {
     TF_LITE_REPORT_ERROR(
         error_reporter_,
         "Arena size is too small for all buffers. Needed %u but only "
         "%u was available.",
-        planner.GetMaximumMemorySize(), actual_available_arena_size);
+        memory_planner_ptr_->GetMaximumMemorySize(),
+        actual_available_arena_size);
     return kTfLiteError;
   }
   // Commit the plan.
-  TF_LITE_ENSURE_STATUS(CommitPlan(error_reporter_, &planner,
+  TF_LITE_ENSURE_STATUS(CommitPlan(error_reporter_, memory_planner_ptr_,
                                    memory_allocator_->GetHeadBuffer(),
                                    allocation_info, allocation_info_count));
 #ifdef TF_LITE_SHOW_MEMORY_USE
-  planner.PrintMemoryPlan();
+  memory_planner_ptr_->PrintMemoryPlan();
 #endif
-  head_usage = planner.GetMaximumMemorySize();
+  head_usage = memory_planner_ptr_->GetMaximumMemorySize();
 
   // The head is used to store memory plans for one model at a time during the
   // model preparation stage, and is re-purposed to store scratch buffer handles

@@ -80,6 +80,10 @@ class GreedyMemoryPlanner : public MemoryPlanner {
   TfLiteStatus GetOffsetForBuffer(ErrorReporter* error_reporter,
                                   int buffer_index, int* offset) override;
 
+  int ProduceOfflinePlan(tflite::ErrorReporter* error_reporter,
+                         unsigned char* plan_buffer,
+                         int buffer_max_size) override;
+
   // Prints an ascii-art diagram of the buffer layout plan.
   void PrintMemoryPlan();
 
@@ -106,6 +110,8 @@ class GreedyMemoryPlanner : public MemoryPlanner {
   }
 
  private:
+  void SerializedOfflineMemoryPlan(uint8_t* buffer, int buffer_size);
+
   // Whether a buffer is active in a given time range.
   bool DoesEntryOverlapInTime(const ListEntry* entry, const int first_time_used,
                               const int last_time_used) const;

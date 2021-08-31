@@ -23,6 +23,7 @@ limitations under the License.
 #include "tensorflow/lite/core/api/flatbuffer_conversions.h"
 #include "tensorflow/lite/micro/compatibility.h"
 #include "tensorflow/lite/micro/flatbuffer_utils.h"
+#include "tensorflow/lite/micro/memory_planner/memory_planner.h"
 #include "tensorflow/lite/micro/simple_memory_allocator.h"
 #include "tensorflow/lite/schema/schema_generated.h"
 
@@ -113,13 +114,15 @@ class MicroAllocator {
   // bytes aligned, otherwise some head room will be wasted.
   // TODO(b/157615197): Cleanup constructor + factory usage.
   static MicroAllocator* Create(uint8_t* tensor_arena, size_t arena_size,
-                                ErrorReporter* error_reporter);
+                                ErrorReporter* error_reporter,
+                                MemoryPlanner* memory_planner_ptr);
 
   // Creates a MicroAllocator instance using the provided SimpleMemoryAllocator
   // intance. This allocator instance will use the SimpleMemoryAllocator
   // instance to manage allocations internally.
   static MicroAllocator* Create(SimpleMemoryAllocator* memory_allocator,
-                                ErrorReporter* error_reporter);
+                                ErrorReporter* error_reporter,
+                                MemoryPlanner* memory_planner_ptr);
 
   // Allocates internal resources required for model inference for each subgraph
   // from the arena.
@@ -206,7 +209,8 @@ class MicroAllocator {
 
  protected:
   MicroAllocator(SimpleMemoryAllocator* memory_allocator,
-                 ErrorReporter* error_reporter);
+                 ErrorReporter* error_reporter,
+                 MemoryPlanner* memory_planner_ptr = nullptr);
   virtual ~MicroAllocator();
 
   // Allocates an array in the arena to hold pointers to the node and
@@ -282,6 +286,8 @@ class MicroAllocator {
   // Holds the byte length of the memory plan with the largest head usage. Used
   // to ensure that multi-tenant allocations can share the head for buffers.
   size_t max_head_buffer_usage_ = 0;
+
+  MemoryPlanner* memory_planner_ptr_ = nullptr;
 
   TF_LITE_REMOVE_VIRTUAL_DELETE
 };

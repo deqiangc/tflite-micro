@@ -17,10 +17,17 @@ limitations under the License.
 
 #include "tensorflow/lite/micro/all_ops_resolver.h"
 #include "tensorflow/lite/micro/examples/hello_world/hello_world_model_data.h"
+#include "tensorflow/lite/micro/memory_planner/memory_planner.h"
+#include "tensorflow/lite/micro/memory_planner/offline_memory_planner.h"
 #include "tensorflow/lite/micro/micro_error_reporter.h"
 #include "tensorflow/lite/micro/micro_interpreter.h"
 #include "tensorflow/lite/micro/testing/micro_test.h"
 #include "tensorflow/lite/schema/schema_generated.h"
+
+const int kOfflineMemoryPlanDataLength = 8;
+const unsigned char OfflineMemoryPlanData[] = {
+    0x10, 0x0, 0x0, 0x0, 0x10, 0x0, 0x0, 0x0,
+};
 
 TF_LITE_MICRO_TESTS_BEGIN
 
@@ -48,9 +55,17 @@ TF_LITE_MICRO_TEST(LoadModelAndPerformInference) {
   constexpr int kTensorArenaSize = 2000;
   uint8_t tensor_arena[kTensorArenaSize];
 
+  tflite::MemoryPlanner* planner_ptr = nullptr;
+#if defined(ENABLE_OFFLINE_PLANNER)
+  tflite::OfflineMemoryPlanner planner = tflite::OfflineMemoryPlanner(
+      OfflineMemoryPlanData, kOfflineMemoryPlanDataLength);
+  planner_ptr = &planner;
+#endif
+
   // Build an interpreter to run the model with
   tflite::MicroInterpreter interpreter(model, resolver, tensor_arena,
-                                       kTensorArenaSize, &micro_error_reporter);
+                                       kTensorArenaSize, &micro_error_reporter,
+                                       planner_ptr);
   // Allocate memory from the tensor_arena for the model's tensors
   TF_LITE_MICRO_EXPECT_EQ(interpreter.AllocateTensors(), kTfLiteOk);
 

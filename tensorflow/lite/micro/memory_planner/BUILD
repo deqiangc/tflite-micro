@@ -77,3 +77,20 @@ cc_test(
         "//tensorflow/lite/micro/testing:micro_test",
     ],
 )
+
+cc_library(
+    name = "offline_memory_planner",
+    srcs = [
+        "offline_memory_planner.cc",
+    ],
+    hdrs = [
+        "offline_memory_planner.h",
+    ],
+    copts = micro_copts(),
+    deps = [
+        ":memory_planner",
+        "//tensorflow/lite/micro:micro_compatibility",
+        "//tensorflow/lite/micro:micro_error_reporter",
+        "//tensorflow/lite/micro:micro_string",
+    ],
+)
