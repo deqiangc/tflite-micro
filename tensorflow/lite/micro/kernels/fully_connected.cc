@@ -61,7 +61,7 @@ TfLiteStatus Prepare(TfLiteContext* context, TfLiteNode* node) {
                                        input, filter, bias, output, data);
 }
 
-TfLiteStatus Eval(TfLiteContext* context, TfLiteNode* node) {
+TfLiteStatus EvalFullConnected(TfLiteContext* context, TfLiteNode* node) {
   TFLITE_DCHECK(node->builtin_data != nullptr);
   const auto* params =
       static_cast<const TfLiteFullyConnectedParams*>(node->builtin_data);
@@ -124,7 +124,7 @@ TfLiteRegistration Register_FULLY_CONNECTED() {
   return {/*init=*/Init,
           /*free=*/nullptr,
           /*prepare=*/Prepare,
-          /*invoke=*/Eval,
+          /*invoke=*/EvalFullConnected,
           /*profiling_string=*/nullptr,
           /*builtin_code=*/0,
           /*custom_name=*/nullptr,
