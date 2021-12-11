@@ -95,7 +95,7 @@ above method is 9732 bytes.
 ### Only register kernels that a model needs
 
 One common issue that leads to unnecessary large code size is forgetting to only
-register only kernels that a model needs and ending up registering all kernels.
+register kernels that a model needs and ending up registering all kernels.
 
 TFLM provides a convenient `tflite::AllOpsResolver` that register for all
 kernels that TFLM supports. This is useful when at the exploration stage and the
@@ -105,7 +105,7 @@ remove those kernels that is never used.
 
 Therefore, when moving off the exploration stage, it is better to only register
 for kernels that the model needs to have a smaller footprint. The following code
-snipet shows how to do so using the keyword detection as an example:
+snippet shows how to do so using the keyword detection as an example:
 
 ```cc
   // Create OpResolver class with up to 6 kernel support.
