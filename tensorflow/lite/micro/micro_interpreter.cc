@@ -186,6 +186,9 @@ TfLiteStatus MicroInterpreter::PrepareNodeAndRegistrationDataFromFlatbuffer() {
 }
 
 TfLiteStatus MicroInterpreter::AllocateTensors() {
+  // Read the model and creates associated internal data structure such as
+  // NodeAndRegistration, EvalTensors for the model.
+  //
   SubgraphAllocations* allocations = allocator_.StartModelAllocation(model_);
 
   if (allocations == nullptr) {

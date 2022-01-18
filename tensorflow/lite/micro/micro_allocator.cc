@@ -531,6 +531,9 @@ MicroAllocator* MicroAllocator::Create(SimpleMemoryAllocator* memory_allocator,
   return allocator;
 }
 
+  // Read the model and creates associated internal data structure such as
+  // NodeAndRegistration, EvalTensors for the model.
+  //
 SubgraphAllocations* MicroAllocator::StartModelAllocation(const Model* model) {
   TFLITE_DCHECK(model != nullptr);
 
@@ -543,6 +546,8 @@ SubgraphAllocations* MicroAllocator::StartModelAllocation(const Model* model) {
 
   model_is_allocating_ = true;
 
+  // TODO: AllocateFromTail --> AllocatePersistent  ?
+  // AllocateBuiltInDataAllocator that is for each OP to convert flatbuffer format options to kernel API.
   uint8_t* data_allocator_buffer = memory_allocator_->AllocateFromTail(
       sizeof(MicroBuiltinDataAllocator), alignof(MicroBuiltinDataAllocator));
   builtin_data_allocator_ =
@@ -662,6 +667,8 @@ TfLiteStatus MicroAllocator::FinishPrepareNodeAllocations(int node_id) {
       requests[i].node_idx = node_id;
     }
   }
+
+  // TODO: Realloc api
 
   // Ensure that the head is re-adjusted to allow for another at-most
   // kMaxScratchBuffersPerOp scratch buffer requests in the next operator:
@@ -982,14 +989,24 @@ TfLiteStatus MicroAllocator::AllocateScratchBufferHandles(
   return kTfLiteOk;
 }
 
+// At Init and Prepare time before memory plan is commited or fixed
+// overlay arena  with
 TfLiteStatus MicroAllocator::InitScratchBufferData() {
   // A model is preparing to allocate resources, ensure that scratch buffer
   // request counter is cleared:
   scratch_buffer_request_count_ = 0;
 
+  // SetHeadBufferSize(): instead of directly manipulating head buffer,
+  // just AllocateTemp(), and check contiguous
+  // malloc or persistent for additional storage is ok.
+  // debug infor.
+
   // All requests will be stored in the head section. Each kernel is allowed at
   // most kMaxScratchBuffersPerOp requests. Adjust the head to reserve at most
   // that many requests to begin:
+
+  // TODO: allocate temp and return a pointer to old head.
+  // Some api: expand exis
   TF_LITE_ENSURE_STATUS(memory_allocator_->SetHeadBufferSize(
       sizeof(internal::ScratchBufferRequest) * kMaxScratchBuffersPerOp,
       alignof(internal::ScratchBufferRequest)));
