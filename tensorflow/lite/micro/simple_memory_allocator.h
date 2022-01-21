@@ -1,4 +1,4 @@
-/* Copyright 2020 The TensorFlow Authors. All Rights Reserved.
+''/* Copyright 2020 The TensorFlow Authors. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,6 +24,33 @@ limitations under the License.
 #include "tensorflow/lite/micro/compatibility.h"
 
 namespace tflite {
+
+// I represent interface
+class SingleArenaAllocator: public ITempBufferAllocator, IPersistentBufferAllocator {
+
+};
+
+ITempBufferAllocator, IPersistentBufferAllocator  need to return address.
+for example, malloc for test.
+
+// How it is used
+SingleArenaAllocator arena_allocator(tensor_area, tensor_size);
+
+// inside micro_allocator, at construct, we would have two pointers
+// one to ITempBufferAllocator : temp_buffer_allocator
+// the other to IPersisentBuferAllocator: persistent_buffer_allocator
+
+MicroAllocator::MicroAllocator(ITempBufferAllocator* memory_allocator,
+                               IPersistentBufferAllocator * persistent_buffer_allocator,
+                               MicroMemoryPlanner* memory_planner,
+                               ErrorReporter* error_reporter)
+
+// Support of multiple arena: 1. persistent and temp are separate
+// 2. put some buffer in special region?
+// One is somebody write their own TempBuffer
+// Memory plan:
+// activation tensor:
+class MultipleArenaAllocator:
 
 // TODO(petewarden): This allocator never frees up or reuses  any memory, even
 // though we have enough information about lifetimes of the tensors to do so.

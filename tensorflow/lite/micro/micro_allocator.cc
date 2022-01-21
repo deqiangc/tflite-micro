@@ -531,6 +531,8 @@ MicroAllocator* MicroAllocator::Create(SimpleMemoryAllocator* memory_allocator,
   return allocator;
 }
 
+// MicroAllocator -->  RunTimeGraphModelBuilder,  ModelToTFLMRepresentation.
+
   // Read the model and creates associated internal data structure such as
   // NodeAndRegistration, EvalTensors for the model.
   //
