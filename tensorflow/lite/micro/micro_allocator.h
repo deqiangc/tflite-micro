@@ -80,6 +80,9 @@ typedef struct {
 
 // Stores all per-subgraph allocations. This includes the node and registration
 // array, tensor list and scratch buffer handles for each subgraph.
+// Rename -->  SubgraphMemoryRecord wins over SubgraphAllocationRecord
+// Having both node and tensors in same structure
+// an arbitrary collection of implementation detail.
 typedef struct {
   NodeAndRegistration* node_and_registrations;
   TfLiteEvalTensor* tensors;

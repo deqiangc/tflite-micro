@@ -53,6 +53,11 @@ class MicroMemoryPlanner {
   // result, so the buffer information that's passed into the N-th call of
   // this method will be used as the buffer_index argument to
   // GetOffsetForBuffer().
+
+  // calling AddBuffer in a loop continuouly.
+  // Why not just pass in all Buffer in one shot?
+  // input array, another array internal.
+  // ?
   virtual TfLiteStatus AddBuffer(tflite::ErrorReporter* error_reporter,
                                  int size, int first_time_used,
                                  int last_time_used) = 0;

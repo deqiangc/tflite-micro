@@ -91,6 +91,14 @@ void MicroInterpreter::Init(MicroProfiler* profiler) {
   initialization_status_ = kTfLiteOk;
 }
 
+// Avoid converting flatbuffer to c api
+// Just run time
+// save some size.
+//  equivalent of extracting OpData at Invoke().
+// quantization parameter:
+// flatbuffer tool.
+// call function instead of directly storing in op_data. give us an option to
+// choose different implementation. access function
 TfLiteStatus MicroInterpreter::PrepareNodeAndRegistrationDataFromFlatbuffer() {
   for (int subgraph_idx = 0; subgraph_idx < graph_.NumSubgraphs();
        subgraph_idx++) {
@@ -198,8 +206,12 @@ TfLiteStatus MicroInterpreter::AllocateTensors() {
     return kTfLiteError;
   }
 
+  // If we can distill graph_ and whatever it is pointing to a RunTimeModel,
+  // then InitRunTimeModel can encapulate this until line 192 to make it less
+  // odd.
   graph_.SetSubgraphAllocations(allocations);
 
+  // should be in InitRunTimeModel
   TF_LITE_ENSURE_STATUS(PrepareNodeAndRegistrationDataFromFlatbuffer());
 
   // Only allow AllocatePersistentBuffer in Init stage.
@@ -207,6 +219,7 @@ TfLiteStatus MicroInterpreter::AllocateTensors() {
   context_.RequestScratchBufferInArena = nullptr;
   context_.GetScratchBuffer = nullptr;
   context_.GetExternalContext = nullptr;
+  // InitNodesInSugbraphs? < InitSubgraphNodes
   TF_LITE_ENSURE_STATUS(graph_.InitSubgraphs());
 
   // Both AllocatePersistentBuffer and RequestScratchBufferInArena is
@@ -216,6 +229,7 @@ TfLiteStatus MicroInterpreter::AllocateTensors() {
   // external_context become available in Prepare stage.
   context_.GetExternalContext = MicroContextGetExternalContext;
 
+  // PrepareSubgraphNodes()
   TF_LITE_ENSURE_STATUS(graph_.PrepareSubgraphs());
 
   // Prepare is done, we're ready for Invoke. Memory allocation is no longer
@@ -224,6 +238,7 @@ TfLiteStatus MicroInterpreter::AllocateTensors() {
   context_.RequestScratchBufferInArena = nullptr;
   context_.GetScratchBuffer = MicroContextGetScratchBuffer;
 
+  // FinalizeMemoryAllocationPlan
   TF_LITE_ENSURE_OK(&context_, allocator_.FinishModelAllocation(
                                    model_, graph_.GetAllocations(),
                                    &scratch_buffer_handles_));

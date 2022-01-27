@@ -1,4 +1,4 @@
-''/* Copyright 2020 The TensorFlow Authors. All Rights Reserved.
+/* Copyright 2020 The TensorFlow Authors. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
-
 #ifndef TENSORFLOW_LITE_MICRO_SIMPLE_MEMORY_ALLOCATOR_H_
 #define TENSORFLOW_LITE_MICRO_SIMPLE_MEMORY_ALLOCATOR_H_
 
@@ -26,9 +25,8 @@ limitations under the License.
 namespace tflite {
 
 // I represent interface
-class SingleArenaAllocator: public ITempBufferAllocator, IPersistentBufferAllocator {
-
-};
+class SingleArenaAllocator : public ITempBufferAllocator,
+                             IPersistentBufferAllocator {};
 
 ITempBufferAllocator, IPersistentBufferAllocator  need to return address.
 for example, malloc for test.
@@ -40,22 +38,23 @@ SingleArenaAllocator arena_allocator(tensor_area, tensor_size);
 // one to ITempBufferAllocator : temp_buffer_allocator
 // the other to IPersisentBuferAllocator: persistent_buffer_allocator
 
-MicroAllocator::MicroAllocator(ITempBufferAllocator* memory_allocator,
-                               IPersistentBufferAllocator * persistent_buffer_allocator,
-                               MicroMemoryPlanner* memory_planner,
-                               ErrorReporter* error_reporter)
+MicroAllocator::MicroAllocator(
+    ITempBufferAllocator* memory_allocator,
+    IPersistentBufferAllocator* persistent_buffer_allocator,
+    MicroMemoryPlanner* memory_planner, ErrorReporter* error_reporter)
 
-// Support of multiple arena: 1. persistent and temp are separate
-// 2. put some buffer in special region?
-// One is somebody write their own TempBuffer
-// Memory plan:
-// activation tensor:
-class MultipleArenaAllocator:
+    // Support of multiple arena: 1. persistent and temp are separate
+    // 2. put some buffer in special region?
+    // One is somebody write their own TempBuffer
+    // Memory plan:
+    // activation tensor:
+    class MultipleArenaAllocator :
 
-// TODO(petewarden): This allocator never frees up or reuses  any memory, even
-// though we have enough information about lifetimes of the tensors to do so.
-// This makes it pretty wasteful, so we should use a more intelligent method.
-class SimpleMemoryAllocator {
+    // TODO(petewarden): This allocator never frees up or reuses  any memory,
+    // even though we have enough information about lifetimes of the tensors to
+    // do so. This makes it pretty wasteful, so we should use a more intelligent
+    // method.
+    class SimpleMemoryAllocator {
  public:
   // TODO(b/157615197): Cleanup constructors/destructor and use factory
   // functions.

@@ -533,9 +533,14 @@ MicroAllocator* MicroAllocator::Create(SimpleMemoryAllocator* memory_allocator,
 
 // MicroAllocator -->  RunTimeGraphModelBuilder,  ModelToTFLMRepresentation.
 
-  // Read the model and creates associated internal data structure such as
-  // NodeAndRegistration, EvalTensors for the model.
-  //
+// Read the model and creates associated internal data structure such as
+// NodeAndRegistration, EvalTensors for the model.
+//
+// A graph:
+// MicroGraph, GraphAllocation, MicroAllocator
+// StartModelAllocation --> InitializeRuntimeModel
+//
+// if we have a RuntimeModel object, then we can have a better offline
 SubgraphAllocations* MicroAllocator::StartModelAllocation(const Model* model) {
   TFLITE_DCHECK(model != nullptr);
 
@@ -549,7 +554,8 @@ SubgraphAllocations* MicroAllocator::StartModelAllocation(const Model* model) {
   model_is_allocating_ = true;
 
   // TODO: AllocateFromTail --> AllocatePersistent  ?
-  // AllocateBuiltInDataAllocator that is for each OP to convert flatbuffer format options to kernel API.
+  // AllocateBuiltInDataAllocator that is for each OP to convert flatbuffer
+  // format options to kernel API.
   uint8_t* data_allocator_buffer = memory_allocator_->AllocateFromTail(
       sizeof(MicroBuiltinDataAllocator), alignof(MicroBuiltinDataAllocator));
   builtin_data_allocator_ =
@@ -894,6 +900,8 @@ TfLiteStatus MicroAllocator::CommitStaticMemoryPlan(
 
   // Allocate an array of AllocationInfo structs from the temp section. This
   // struct will be used by AllocationInfoBuilder to find buffer usage.
+
+  // MOve AllocationInfo to memory_planner
   AllocationInfo* allocation_info = reinterpret_cast<AllocationInfo*>(
       memory_allocator_->AllocateTemp(bytes, alignof(AllocationInfo)));
   if (allocation_info == nullptr) {

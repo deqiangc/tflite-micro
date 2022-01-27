@@ -138,6 +138,9 @@ class GreedyMemoryPlanner : public MicroMemoryPlanner {
     int last_time_used;
   };
 
+  // 1. Output has a different life time
+  // 2. Realloc for requirements.
+
   // Working arrays used during the layout algorithm.
   BufferRequirements* requirements_;
   // buffer_sizes_sorted_ and buffer_ids_sorted_ are sorted according to:
